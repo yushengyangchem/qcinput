@@ -6,10 +6,10 @@ from TOML, and writes an ORCA or Gaussian input file.
 ## Install With pip
 
 ```bash
-python -m pip install .
+python -m pip install qcinput
 ```
 
-For development:
+For development (from source):
 
 ```bash
 python -m pip install -e .
