@@ -23,6 +23,14 @@ clean:
 build:
     cd {{ repo_root }} && {{ PYTHON }} -m build
 
+# Build package, validate, and upload to PyPI via twine.
+twine:
+    cd {{ repo_root }} && rm -rf dist
+    cd {{ repo_root }} && {{ PYTHON }} -m build
+    cd {{ repo_root }} && twine check dist/*
+    cd {{ repo_root }} && twine upload dist/*
+    cd {{ repo_root }} && rm -rf dist
+
 # Run pytest; pass through extra flags, e.g. `just test -k example`.
 test *flags:
     cd {{ repo_root }} && {{ PYTHON }} -m pytest tests {{ flags }} -v

@@ -66,6 +66,8 @@
                 p: with p; [
                   qcinput
                   pytest
+                  build
+                  twine
                 ]
               ))
             ]
