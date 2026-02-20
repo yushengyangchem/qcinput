@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qcinput"
+dynamic = ["version"]
+description = "Generate quantum chemistry input files from molecular structures"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["quantum-chemistry", "orca", "gaussian", "cli"]
+authors = [{ name = "Yusheng Yang", email = "yushengyangchem@gmail.com" }]
+maintainers = [{ name = "Yusheng Yang", email = "yushengyangchem@gmail.com" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Chemistry",
+  "Environment :: Console",
+]
+
+[project.scripts]
+qcinput = "qcinput.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yushengyangchem/qcinput"
+Issues = "https://github.com/yushengyangchem/qcinput/issues"
+Documentation = "https://github.com/yushengyangchem/qcinput#readme"
+
+[tool.hatch.version]
+path = "src/qcinput/__init__.py"
