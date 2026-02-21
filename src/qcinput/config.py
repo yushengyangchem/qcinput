@@ -27,10 +27,23 @@ def default_config_path() -> Path:
     return Path.cwd() / "qcinput.toml"
 
 
-def default_config_toml() -> str:
-    return """[qcinput]
+def _task_keywords(kind: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    if kind == "int":
+        return ("Opt", "Freq"), ("Opt", "Freq")
+    if kind == "ts":
+        return ("OptTS", "Freq"), ("OptTS", "Freq")
+    if kind == "sp":
+        return ("SP",), ("SP",)
+    raise ValueError("Config kind must be one of: int, ts, sp.")
+
+
+def default_config_toml(kind: str = "int") -> str:
+    orca_keywords, gaussian_route = _task_keywords(kind)
+    orca_keywords_toml = ", ".join(f'"{kw}"' for kw in orca_keywords)
+    gaussian_route_toml = ", ".join(f'"{kw}"' for kw in gaussian_route)
+    return f"""[qcinput]
 engine = "orca" # or "gaussian"
-kind = "int"    # int | ts | sp
+kind = "{kind}" # int | ts | sp
 
 [molecule]
 charge = 0
@@ -41,28 +54,16 @@ nprocs = 8
 maxcore = 4000
 base_keywords = ["r2scan-3c", "D4", "def2-mTZVPP"]
 
-[orca.task.int]
-keywords = ["Opt", "Freq"]
-
-[orca.task.ts]
-keywords = ["OptTS", "Freq"]
-
-[orca.task.sp]
-keywords = ["SP"]
+[orca.task.{kind}]
+keywords = [{orca_keywords_toml}]
 
 [gaussian]
 nprocshared = 8
 mem = "8GB"
 method_basis = "B3LYP/def2TZVP"
 
-[gaussian.task.int]
-route = ["Opt", "Freq"]
-
-[gaussian.task.ts]
-route = ["OptTS", "Freq"]
-
-[gaussian.task.sp]
-route = ["SP"]
+[gaussian.task.{kind}]
+route = [{gaussian_route_toml}]
 """
 
 

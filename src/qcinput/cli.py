@@ -2,6 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from qcinput import __homepage__, __version__
 from qcinput.config import default_config_path, default_config_toml, load_config
 from qcinput.gaussian import render_gaussian_input
 from qcinput.orca import render_orca_input
@@ -25,10 +26,40 @@ def _add_generate_args(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _add_init_config_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "-k",
+        "--kind",
+        choices=("int", "ts", "sp"),
+        default="int",
+        help="Template kind to initialize. Choices: int, ts, sp.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=default_config_path(),
+        help="Output TOML path. Default: ./qcinput.toml",
+    )
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Overwrite the target file if it already exists.",
+    )
+
+
 def build_root_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="qcinput",
         description="Generate ORCA or Gaussian input files from XYZ structures.",
+        epilog="Default behavior: `qcinput <path/to/structure.xyz>` is treated as `qcinput generate <path/to/structure.xyz>`.",
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}\nHomepage: {__homepage__}",
     )
     subparsers = parser.add_subparsers(dest="command")
 
@@ -43,18 +74,7 @@ def build_root_parser() -> argparse.ArgumentParser:
         help="Write a starter qcinput.toml in the current directory.",
         description="Write a starter qcinput.toml in the current directory.",
     )
-    init_parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        default=default_config_path(),
-        help="Output TOML path. Default: ./qcinput.toml",
-    )
-    init_parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Overwrite the target file if it already exists.",
-    )
+    _add_init_config_args(init_parser)
     return parser
 
 
@@ -64,7 +84,7 @@ def run_init_config(args: argparse.Namespace) -> int:
         raise SystemExit(
             f"error: Config file already exists: {path}. Use --force to overwrite."
         )
-    path.write_text(default_config_toml(), encoding="utf-8")
+    path.write_text(default_config_toml(args.kind), encoding="utf-8")
     print(path)
     return 0
 
@@ -98,7 +118,14 @@ def run_generate(args: argparse.Namespace) -> int:
 def main() -> int:
     argv = sys.argv[1:]
     parser = build_root_parser()
-    if argv and argv[0] not in {"generate", "init-config", "-h", "--help"}:
+    if argv and argv[0] not in {
+        "generate",
+        "init-config",
+        "-h",
+        "--help",
+        "-V",
+        "--version",
+    }:
         argv = ["generate", *argv]
     args = parser.parse_args(argv)
     if args.command == "init-config":

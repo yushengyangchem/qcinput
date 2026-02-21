@@ -7,7 +7,7 @@
 let
   versionFile = builtins.readFile ./src/qcinput/__init__.py;
   versionLine = builtins.replaceStrings [ "\n" "\r" ] [ "" "" ] versionFile;
-  versionMatch = builtins.match ''__version__ = "([^"]+)"'' versionLine;
+  versionMatch = builtins.match ''.*__version__ = "([^"]+)".*'' versionLine;
   version =
     if versionMatch == null then
       throw "Cannot find __version__ in src/qcinput/__init__.py"

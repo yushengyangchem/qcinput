@@ -39,10 +39,20 @@ Compatibility shorthand (same behavior):
 qcinput <path/to/structure.xyz> [-c|--config <path/to/qcinput.toml>] [-o output.inp]
 ```
 
+Show version:
+
+```bash
+qcinput --version
+qcinput -V
+```
+
 First-time setup:
 
 ```bash
 qcinput init-config
+qcinput init-config --kind int
+qcinput init-config --kind ts
+qcinput init-config --kind sp
 ```
 
 Default config path:
@@ -86,12 +96,6 @@ base_keywords = ["r2scan-3c", "D4", "def2-mTZVPP"]
 [orca.task.int]
 keywords = ["Opt", "Freq"]
 
-[orca.task.ts]
-keywords = ["OptTS", "Freq"]
-
-[orca.task.sp]
-keywords = ["SP"]
-
 [gaussian]
 nprocshared = 8
 mem = "8GB"
@@ -99,12 +103,6 @@ method_basis = "B3LYP/def2TZVP"
 
 [gaussian.task.int]
 route = ["Opt", "Freq"]
-
-[gaussian.task.ts]
-route = ["OptTS", "Freq"]
-
-[gaussian.task.sp]
-route = ["SP"]
 ```
 
 ## Output Snippet

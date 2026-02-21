@@ -1,5 +1,6 @@
 import sys
 
+from qcinput import __homepage__, __version__
 from qcinput.cli import main
 
 
@@ -18,6 +19,59 @@ def test_init_config_creates_default_file(monkeypatch, tmp_path, capsys) -> None
     assert "[qcinput]" in text
     assert "[orca]" in text
     assert "[gaussian]" in text
+    assert 'kind = "int"' in text
+    assert "[orca.task.int]" in text
+    assert "[gaussian.task.int]" in text
+    assert 'keywords = ["Opt", "Freq"]' in text
+    assert 'route = ["Opt", "Freq"]' in text
+    assert "[orca.task.ts]" not in text
+    assert "[gaussian.task.ts]" not in text
+    assert "[orca.task.sp]" not in text
+    assert "[gaussian.task.sp]" not in text
+
+
+def test_init_config_supports_ts_template(monkeypatch, tmp_path, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    expected = tmp_path / "qcinput.toml"
+
+    monkeypatch.setattr(sys, "argv", ["qcinput", "init-config", "--kind", "ts"])
+    exit_code = main()
+    captured = capsys.readouterr()
+    text = expected.read_text(encoding="utf-8")
+
+    assert exit_code == 0
+    assert str(expected) in captured.out
+    assert 'kind = "ts"' in text
+    assert "[orca.task.ts]" in text
+    assert "[gaussian.task.ts]" in text
+    assert 'keywords = ["OptTS", "Freq"]' in text
+    assert 'route = ["OptTS", "Freq"]' in text
+    assert "[orca.task.int]" not in text
+    assert "[gaussian.task.int]" not in text
+    assert "[orca.task.sp]" not in text
+    assert "[gaussian.task.sp]" not in text
+
+
+def test_init_config_supports_sp_template(monkeypatch, tmp_path, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    expected = tmp_path / "qcinput.toml"
+
+    monkeypatch.setattr(sys, "argv", ["qcinput", "init-config", "--kind", "sp"])
+    exit_code = main()
+    captured = capsys.readouterr()
+    text = expected.read_text(encoding="utf-8")
+
+    assert exit_code == 0
+    assert str(expected) in captured.out
+    assert 'kind = "sp"' in text
+    assert "[orca.task.sp]" in text
+    assert "[gaussian.task.sp]" in text
+    assert 'keywords = ["SP"]' in text
+    assert 'route = ["SP"]' in text
+    assert "[orca.task.int]" not in text
+    assert "[gaussian.task.int]" not in text
+    assert "[orca.task.ts]" not in text
+    assert "[gaussian.task.ts]" not in text
 
 
 def test_init_config_errors_if_exists_without_force(monkeypatch, tmp_path) -> None:
@@ -90,3 +144,15 @@ def test_main_help_shows_init_config(monkeypatch, capsys) -> None:
         assert exc.code == 0
     captured = capsys.readouterr()
     assert "init-config" in captured.out
+    assert "Default behavior:" in captured.out
+    assert "qcinput <path/to/structure.xyz>" in captured.out
+
+
+def test_main_version(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(sys, "argv", ["qcinput", "--version"])
+    try:
+        main()
+    except SystemExit as exc:
+        assert exc.code == 0
+    captured = capsys.readouterr()
+    assert captured.out.strip() == f"qcinput {__version__} Homepage: {__homepage__}"
