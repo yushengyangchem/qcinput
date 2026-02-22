@@ -1,18 +1,18 @@
 # qcinput
 
-`qcinput` is a CLI tool that reads an `xyz` geometry, loads task type and keywords
+`qcinput` is a CLI tool that reads an `xyz` or `gjf` geometry, loads task type and keywords
 from TOML, and writes an ORCA or Gaussian input file.
 
 ## Install With pip
 
 ```bash
-python -m pip install qcinput
+pip install qcinput
 ```
 
 For development (from source):
 
 ```bash
-python -m pip install -e .
+pip install -e .
 ```
 
 ## Run With Nix
@@ -30,13 +30,13 @@ nix run .
 ## Usage
 
 ```bash
-qcinput generate <path/to/structure.xyz> [-c|--config <path/to/qcinput.toml>] [-o output.inp]
+qcinput generate <path/to/structure.xyz|.gjf> [-c|--config <path/to/qcinput.toml>] [-o output.inp]
 ```
 
 Compatibility shorthand (same behavior):
 
 ```bash
-qcinput <path/to/structure.xyz> [-c|--config <path/to/qcinput.toml>] [-o output.inp]
+qcinput <path/to/structure.xyz|.gjf> [-c|--config <path/to/qcinput.toml>] [-o output.inp]
 ```
 
 Show version:

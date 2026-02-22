@@ -1,16 +1,19 @@
 import argparse
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 from qcinput import __homepage__, __version__
 from qcinput.config import default_config_path, default_config_toml, load_config
 from qcinput.gaussian import render_gaussian_input
 from qcinput.orca import render_orca_input
-from qcinput.xyz import load_xyz_text
+from qcinput.structure import load_structure
 
 
 def _add_generate_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("xyz", type=Path, help="Path to an XYZ file.")
+    parser.add_argument(
+        "structure", type=Path, help="Path to a structure file (.xyz or .gjf)."
+    )
     parser.add_argument(
         "-c",
         "--config",
@@ -52,8 +55,8 @@ def _add_init_config_args(parser: argparse.ArgumentParser) -> None:
 def build_root_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="qcinput",
-        description="Generate ORCA or Gaussian input files from XYZ structures.",
-        epilog="Default behavior: `qcinput <path/to/structure.xyz>` is treated as `qcinput generate <path/to/structure.xyz>`.",
+        description="Generate ORCA or Gaussian input files from XYZ/GJF structures.",
+        epilog="Default behavior: `qcinput <path/to/structure.xyz|.gjf>` is treated as `qcinput generate <path/to/structure.xyz|.gjf>`.",
     )
     parser.add_argument(
         "-V",
@@ -65,7 +68,7 @@ def build_root_parser() -> argparse.ArgumentParser:
 
     generate_parser = subparsers.add_parser(
         "generate",
-        help="Generate an input file from an XYZ structure.",
+        help="Generate an input file from an XYZ/GJF structure.",
     )
     _add_generate_args(generate_parser)
 
@@ -91,21 +94,43 @@ def run_init_config(args: argparse.Namespace) -> int:
 
 def run_generate(args: argparse.Namespace) -> int:
     try:
-        xyz_text = load_xyz_text(args.xyz)
+        structure = load_structure(args.structure)
         config = load_config(args.config)
+        if (
+            structure.source_format == "gjf"
+            and structure.charge is not None
+            and structure.multiplicity is not None
+        ):
+            if (
+                config.charge != structure.charge
+                or config.multiplicity != structure.multiplicity
+            ):
+                raise ValueError(
+                    "GJF charge/multiplicity mismatch with config: "
+                    f"gjf={structure.charge}/{structure.multiplicity}, "
+                    f"config={config.charge}/{config.multiplicity}. "
+                    "Please align [molecule] in config with the GJF file."
+                )
+            config = replace(
+                config,
+                charge=structure.charge,
+                multiplicity=structure.multiplicity,
+            )
         default_suffix = ".inp" if config.engine == "orca" else ".gjf"
-        out_path = args.output or args.xyz.with_name(f"{args.xyz.stem}{default_suffix}")
+        out_path = args.output or args.structure.with_name(
+            f"{args.structure.stem}{default_suffix}"
+        )
         if config.engine == "orca":
             inp_text = render_orca_input(
-                xyz_text=xyz_text,
+                xyz_text=structure.xyz_text,
                 config=config,
-                source_xyz_name=args.xyz.name,
+                source_xyz_name=args.structure.name,
             )
         else:
             inp_text = render_gaussian_input(
-                xyz_text=xyz_text,
+                xyz_text=structure.xyz_text,
                 config=config,
-                source_xyz_name=args.xyz.name,
+                source_xyz_name=args.structure.name,
             )
         out_path.write_text(inp_text, encoding="utf-8")
     except (FileNotFoundError, ValueError) as exc:

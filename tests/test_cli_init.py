@@ -145,7 +145,7 @@ def test_main_help_shows_init_config(monkeypatch, capsys) -> None:
     captured = capsys.readouterr()
     assert "init-config" in captured.out
     assert "Default behavior:" in captured.out
-    assert "qcinput <path/to/structure.xyz>" in captured.out
+    assert "qcinput <path/to/structure.xyz|.gjf>" in captured.out
 
 
 def test_main_version(monkeypatch, capsys) -> None:
