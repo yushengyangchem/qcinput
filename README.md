@@ -15,18 +15,6 @@ For development (from source):
 pip install -e .
 ```
 
-## Run With Nix
-
-```bash
-nix develop -c qcinput
-```
-
-Or run directly from the flake package:
-
-```bash
-nix run .
-```
-
 ## Usage
 
 ```bash
