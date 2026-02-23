@@ -5,9 +5,18 @@ from pathlib import Path
 
 from qcinput import __homepage__, __version__
 from qcinput.config import default_config_path, default_config_toml, load_config
-from qcinput.gaussian import render_gaussian_input
-from qcinput.orca import render_orca_input
+from qcinput.gaussian import render_gaussian_input, render_gaussian_two_step_ts_input
+from qcinput.orca import render_orca_input, render_orca_two_step_ts_input
 from qcinput.structure import load_structure
+
+
+def _merge_keywords(*keyword_groups: tuple[str, ...]) -> tuple[str, ...]:
+    merged: list[str] = []
+    for group in keyword_groups:
+        for kw in group:
+            if kw not in merged:
+                merged.append(kw)
+    return tuple(merged)
 
 
 def _add_generate_args(parser: argparse.ArgumentParser) -> None:
@@ -121,17 +130,63 @@ def run_generate(args: argparse.Namespace) -> int:
             f"{args.structure.stem}{default_suffix}"
         )
         if config.engine == "orca":
-            inp_text = render_orca_input(
-                xyz_text=structure.xyz_text,
-                config=config,
-                source_xyz_name=args.structure.name,
-            )
+            if config.kind == "ts":
+                if not config.orca_ts_constraint_atoms:
+                    raise ValueError("ORCA ts config is missing constraint_atoms.")
+                if (
+                    config.orca_ts_step1_nprocs is None
+                    or config.orca_ts_step1_maxcore is None
+                    or config.orca_ts_step2_nprocs is None
+                    or config.orca_ts_step2_maxcore is None
+                    or config.orca_ts_calc_hess is None
+                ):
+                    raise ValueError("ORCA ts config is incomplete.")
+                # ORCA writes <input_stem>.xyz after step 1 optimization.
+                step2_xyzfile_name = out_path.with_suffix(".xyz").name
+                inp_text = render_orca_two_step_ts_input(
+                    xyz_text=structure.xyz_text,
+                    source_structure_name=args.structure.name,
+                    step2_xyzfile_name=step2_xyzfile_name,
+                    charge=config.charge,
+                    multiplicity=config.multiplicity,
+                    step1_keywords=_merge_keywords(
+                        config.base_keywords,
+                        config.orca_ts_step1_keywords,
+                        config.orca_extra_keywords,
+                    ),
+                    step2_keywords=_merge_keywords(
+                        config.base_keywords,
+                        config.orca_ts_step2_keywords,
+                        config.orca_extra_keywords,
+                    ),
+                    constraint_atom_pairs=config.orca_ts_constraint_atoms,
+                    step1_nprocs=config.orca_ts_step1_nprocs,
+                    step1_maxcore=config.orca_ts_step1_maxcore,
+                    step2_nprocs=config.orca_ts_step2_nprocs,
+                    step2_maxcore=config.orca_ts_step2_maxcore,
+                    calc_hess=config.orca_ts_calc_hess,
+                    smd=config.orca_smd,
+                    smd_solvent=config.orca_smd_solvent,
+                )
+            else:
+                inp_text = render_orca_input(
+                    xyz_text=structure.xyz_text,
+                    config=config,
+                    source_structure_name=args.structure.name,
+                )
         else:
-            inp_text = render_gaussian_input(
-                xyz_text=structure.xyz_text,
-                config=config,
-                source_xyz_name=args.structure.name,
-            )
+            if config.kind == "ts":
+                inp_text = render_gaussian_two_step_ts_input(
+                    xyz_text=structure.xyz_text,
+                    config=config,
+                    source_structure_name=args.structure.name,
+                )
+            else:
+                inp_text = render_gaussian_input(
+                    xyz_text=structure.xyz_text,
+                    config=config,
+                    source_structure_name=args.structure.name,
+                )
         out_path.write_text(inp_text, encoding="utf-8")
     except (FileNotFoundError, ValueError) as exc:
         raise SystemExit(f"error: {exc}") from exc
