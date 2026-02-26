@@ -98,10 +98,6 @@ def test_orca_ts_generation_from_toml(monkeypatch, tmp_path, capsys) -> None:
     config_text = config_text.replace(
         "constraint_atoms = [[0, 1]]", "constraint_atoms = [[1, 2]]", 1
     )
-    config_text = config_text.replace("step1_nprocs = 36", "step1_nprocs = 20", 1)
-    config_text = config_text.replace("step1_maxcore = 3555", "step1_maxcore = 3000", 1)
-    config_text = config_text.replace("step2_nprocs = 16", "step2_nprocs = 12", 1)
-    config_text = config_text.replace("step2_maxcore = 8000", "step2_maxcore = 6000", 1)
     config_text = config_text.replace("calc_hess = true", "calc_hess = false", 1)
     config.write_text(config_text, encoding="utf-8")
     output = tmp_path / "water_from_toml_ts.inp"

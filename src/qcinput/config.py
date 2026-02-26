@@ -25,10 +25,6 @@ class QCInputConfig:
     orca_ts_step1_keywords: tuple[str, ...] = ()
     orca_ts_step2_keywords: tuple[str, ...] = ()
     orca_ts_constraint_atoms: tuple[tuple[int, int], ...] = ()
-    orca_ts_step1_nprocs: int | None = None
-    orca_ts_step1_maxcore: int | None = None
-    orca_ts_step2_nprocs: int | None = None
-    orca_ts_step2_maxcore: int | None = None
     orca_ts_calc_hess: bool | None = None
     gaussian_ts_step1_route: tuple[str, ...] = ()
     gaussian_ts_modredundant: tuple[str, ...] = ()
@@ -72,10 +68,6 @@ smd_solvent = "toluene"
 step1_keywords = ["Opt"]
 step2_keywords = ["OptTS", "Freq"]
 constraint_atoms = [[0, 1]]
-step1_nprocs = 36
-step1_maxcore = 3555
-step2_nprocs = 16
-step2_maxcore = 8000
 calc_hess = true
 
 [gaussian]
@@ -284,10 +276,6 @@ def _load_orca_config(
             orca_ts_constraint_atoms=_as_int_pair_list(
                 task_section, "constraint_atoms"
             ),
-            orca_ts_step1_nprocs=_as_int(task_section, "step1_nprocs"),
-            orca_ts_step1_maxcore=_as_int(task_section, "step1_maxcore"),
-            orca_ts_step2_nprocs=_as_int(task_section, "step2_nprocs"),
-            orca_ts_step2_maxcore=_as_int(task_section, "step2_maxcore"),
             orca_ts_calc_hess=_as_bool(task_section, "calc_hess"),
         )
     orca_smd = _as_optional_bool(orca, "smd", default=False)

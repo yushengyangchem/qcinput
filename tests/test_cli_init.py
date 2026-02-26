@@ -49,10 +49,6 @@ def test_init_config_supports_ts_template(monkeypatch, tmp_path, capsys) -> None
     assert 'step1_keywords = ["Opt"]' in text
     assert 'step2_keywords = ["OptTS", "Freq"]' in text
     assert "constraint_atoms = [[0, 1]]" in text
-    assert "step1_nprocs = 36" in text
-    assert "step1_maxcore = 3555" in text
-    assert "step2_nprocs = 16" in text
-    assert "step2_maxcore = 8000" in text
     assert "calc_hess = true" in text
     assert "smd = false" in text
     assert 'smd_solvent = "toluene"' in text
