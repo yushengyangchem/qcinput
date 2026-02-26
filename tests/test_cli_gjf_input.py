@@ -146,4 +146,4 @@ def test_orca_ts_with_gjf_input_generates_companion_xyz(
 
     assert exit_code == 0
     assert str(output) in captured.out
-    assert "* xyzfile 0 1 from_gjf_ts.xyz *" in text
+    assert "* xyzfile 0 1 from_gjf_ts_Compound_1.xyz *" in text

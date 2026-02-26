@@ -43,10 +43,12 @@ def test_example_ts_generation(monkeypatch, tmp_path, capsys) -> None:
     assert str(output) in captured.out
     assert "! r2scan-3c D4 def2-mTZVPP Opt NoPop" in text
     assert "{B 0 1 C}" in text
-    assert "$new_job" in text
+    assert "%compound" in text
+    assert "  New_Step" in text
+    assert "  Step_End" in text
     assert "! r2scan-3c D4 def2-mTZVPP OptTS Freq NoPop" in text
     assert "  calc_hess true" in text
-    assert "* xyzfile 0 1 water_ts.xyz *" in text
+    assert "* xyzfile 0 1 water_ts_Compound_1.xyz *" in text
     assert "* xyz 0 1" in text
 
 
@@ -118,11 +120,11 @@ def test_orca_ts_generation_from_toml(monkeypatch, tmp_path, capsys) -> None:
     assert str(output) in captured.out
     assert "! r2scan-3c D4 def2-mTZVPP Opt NoPop" in text
     assert "{B 1 2 C}" in text
-    assert "%maxcore 3000" in text
-    assert "  nprocs 20" in text
+    assert "%maxcore 4000" in text
+    assert "  nprocs 8" in text
     assert "! r2scan-3c D4 def2-mTZVPP OptTS Freq NoPop" in text
-    assert "%maxcore 6000" in text
-    assert "  nprocs 12" in text
+    assert "%maxcore 6000" not in text
+    assert "  nprocs 12" not in text
     assert "  calc_hess false" in text
 
 

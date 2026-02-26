@@ -134,15 +134,13 @@ def run_generate(args: argparse.Namespace) -> int:
                 if not config.orca_ts_constraint_atoms:
                     raise ValueError("ORCA ts config is missing constraint_atoms.")
                 if (
-                    config.orca_ts_step1_nprocs is None
-                    or config.orca_ts_step1_maxcore is None
-                    or config.orca_ts_step2_nprocs is None
-                    or config.orca_ts_step2_maxcore is None
+                    config.nprocs is None
+                    or config.maxcore is None
                     or config.orca_ts_calc_hess is None
                 ):
                     raise ValueError("ORCA ts config is incomplete.")
-                # ORCA writes <input_stem>.xyz after step 1 optimization.
-                step2_xyzfile_name = out_path.with_suffix(".xyz").name
+                # ORCA compound task writes <input_stem>_Compound_1.xyz after step 1.
+                step2_xyzfile_name = f"{out_path.stem}_Compound_1.xyz"
                 inp_text = render_orca_two_step_ts_input(
                     xyz_text=structure.xyz_text,
                     step2_xyzfile_name=step2_xyzfile_name,
@@ -159,10 +157,8 @@ def run_generate(args: argparse.Namespace) -> int:
                         config.orca_extra_keywords,
                     ),
                     constraint_atom_pairs=config.orca_ts_constraint_atoms,
-                    step1_nprocs=config.orca_ts_step1_nprocs,
-                    step1_maxcore=config.orca_ts_step1_maxcore,
-                    step2_nprocs=config.orca_ts_step2_nprocs,
-                    step2_maxcore=config.orca_ts_step2_maxcore,
+                    nprocs=config.nprocs,
+                    maxcore=config.maxcore,
                     calc_hess=config.orca_ts_calc_hess,
                     smd=config.orca_smd,
                     smd_solvent=config.orca_smd_solvent,

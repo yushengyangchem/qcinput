@@ -53,10 +53,8 @@ def render_orca_two_step_ts_input(
     step1_keywords: tuple[str, ...],
     step2_keywords: tuple[str, ...],
     constraint_atom_pairs: tuple[tuple[int, int], ...],
-    step1_nprocs: int,
-    step1_maxcore: int,
-    step2_nprocs: int,
-    step2_maxcore: int,
+    nprocs: int,
+    maxcore: int,
     calc_hess: bool,
     smd: bool,
     smd_solvent: str,
@@ -66,56 +64,61 @@ def render_orca_two_step_ts_input(
     calc_hess_value = "true" if calc_hess else "false"
     lines = [
         f"# {__generator_banner__}",
-        f"! {step1_kw}",
-        f"%maxcore {step1_maxcore}",
         "%pal",
-        f"  nprocs {step1_nprocs}",
+        f"  nprocs {nprocs}",
         "end",
+        f"%maxcore {maxcore}",
+        "%compound",
+        "  New_Step",
+        f"    ! {step1_kw}",
     ]
     if smd:
         lines.extend(
             [
-                "%cpcm",
-                "  SMD true",
-                f'  SMDsolvent "{smd_solvent}"',
-                "end",
+                "    %cpcm",
+                "      SMD true",
+                f'      SMDsolvent "{smd_solvent}"',
+                "    end",
             ]
         )
     lines.extend(
         [
-            "%geom",
-            "  Constraints",
+            "    %geom",
+            "      Constraints",
         ]
     )
     for atom_i, atom_j in constraint_atom_pairs:
-        lines.append(f"    {{B {atom_i} {atom_j} C}}")
+        lines.append(f"        {{B {atom_i} {atom_j} C}}")
     lines.extend(
         [
-            "  end",
-            "end",
-            f"* xyz {charge} {multiplicity}",
+            "      end",
+            "    end",
+            f"    * xyz {charge} {multiplicity}",
             xyz_text,
-            "*",
-            "$new_job",
-            f"! {step2_kw}",
-            f"%maxcore {step2_maxcore}",
-            "%pal",
-            f"  nprocs {step2_nprocs}",
+            "    *",
+            "  Step_End",
+            "",
+            "  New_Step",
+            f"    ! {step2_kw}",
+        ]
+    )
+    if smd:
+        lines.extend(
+            [
+                "    %cpcm",
+                "      SMD true",
+                f'      SMDsolvent "{smd_solvent}"',
+                "    end",
+            ]
+        )
+    lines.extend(
+        [
+            "    %geom",
+            f"      calc_hess {calc_hess_value}",
+            "    end",
+            f"    * xyzfile {charge} {multiplicity} {step2_xyzfile_name} *",
+            "  Step_End",
             "end",
-            *(
-                [
-                    "%cpcm",
-                    "  SMD true",
-                    f'  SMDsolvent "{smd_solvent}"',
-                    "end",
-                ]
-                if smd
-                else []
-            ),
-            "%geom",
-            f"  calc_hess {calc_hess_value}",
-            "end",
-            f"* xyzfile {charge} {multiplicity} {step2_xyzfile_name} *",
             "",
         ]
     )
