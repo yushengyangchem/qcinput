@@ -145,7 +145,6 @@ def run_generate(args: argparse.Namespace) -> int:
                 step2_xyzfile_name = out_path.with_suffix(".xyz").name
                 inp_text = render_orca_two_step_ts_input(
                     xyz_text=structure.xyz_text,
-                    source_structure_name=args.structure.name,
                     step2_xyzfile_name=step2_xyzfile_name,
                     charge=config.charge,
                     multiplicity=config.multiplicity,
@@ -172,7 +171,6 @@ def run_generate(args: argparse.Namespace) -> int:
                 inp_text = render_orca_input(
                     xyz_text=structure.xyz_text,
                     config=config,
-                    source_structure_name=args.structure.name,
                 )
         else:
             if config.kind == "ts":

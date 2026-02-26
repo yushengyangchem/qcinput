@@ -12,7 +12,6 @@ def render_orca_input(
     *,
     xyz_text: str,
     config: QCInputConfig,
-    source_structure_name: str,
 ) -> str:
     if config.nprocs is None or config.maxcore is None:
         raise ValueError("ORCA config is incomplete.")
