@@ -2,6 +2,12 @@ from qcinput import __generator_banner__
 from qcinput.config import QCInputConfig
 
 
+def _with_nopop(keywords: tuple[str, ...]) -> str:
+    if any(keyword.casefold() == "nopop" for keyword in keywords):
+        return " ".join(keywords)
+    return " ".join((*keywords, "NoPop"))
+
+
 def render_orca_input(
     *,
     xyz_text: str,
@@ -10,7 +16,7 @@ def render_orca_input(
 ) -> str:
     if config.nprocs is None or config.maxcore is None:
         raise ValueError("ORCA config is incomplete.")
-    keywords = " ".join(
+    keywords = _with_nopop(
         (*config.task_keywords, *config.base_keywords, *config.orca_extra_keywords)
     )
     lines = [
@@ -42,7 +48,6 @@ def render_orca_input(
 def render_orca_two_step_ts_input(
     *,
     xyz_text: str,
-    source_structure_name: str,
     step2_xyzfile_name: str,
     charge: int,
     multiplicity: int,
@@ -57,8 +62,8 @@ def render_orca_two_step_ts_input(
     smd: bool,
     smd_solvent: str,
 ) -> str:
-    step1_kw = " ".join(step1_keywords)
-    step2_kw = " ".join(step2_keywords)
+    step1_kw = _with_nopop(step1_keywords)
+    step2_kw = _with_nopop(step2_keywords)
     calc_hess_value = "true" if calc_hess else "false"
     lines = [
         f"# {__generator_banner__}",
