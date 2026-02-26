@@ -21,7 +21,9 @@ def render_orca_input(
     lines = [
         f"# {__generator_banner__}",
         f"! {keywords}",
-        f"%pal nprocs {config.nprocs} end",
+        "%pal",
+        f"  nprocs {config.nprocs}",
+        "end",
         f"%maxcore {config.maxcore}",
     ]
     if config.orca_smd:
