@@ -1,4 +1,5 @@
 import os
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -63,7 +64,8 @@ keywords = ["Opt", "Freq"]
 [orca.task.ts]
 step1_keywords = ["Opt"]
 step2_keywords = ["OptTS", "Freq"]
-constraint_atoms = [[0, 1]]
+# currently only bond constraints are supported for constraint_atoms.
+constraint_atoms = [[0, 1]] # keep 0-based atom indices
 calc_hess = true
 
 [orca.task.sp]
@@ -80,6 +82,9 @@ route = ["Opt", "Freq"]
 
 [gaussian.task.ts]
 step1_route = ["Opt=ModRedundant"]
+# constraint_atoms in TOML uses 0-based indices.
+# Gaussian output is rendered as 1-based (e.g. [0,1] -> B 1 2 F).
+# currently only bond constraints are supported for constraint_atoms.
 constraint_atoms = [[0, 1]]
 step2_route = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", "Geom=AllCheck", "Guess=Read"]
 
@@ -202,9 +207,17 @@ def _gaussian_modredundant_lines(
 ) -> tuple[str, ...]:
     if "constraint_atoms" in task_section:
         pairs = _as_int_pair_list(task_section, "constraint_atoms")
-        return tuple(f"B {atom_i} {atom_j} F" for atom_i, atom_j in pairs)
+        return tuple(f"B {atom_i + 1} {atom_j + 1} F" for atom_i, atom_j in pairs)
     if "modredundant" in task_section:
-        return _as_nonempty_str_or_list(task_section, "modredundant")
+        lines = _as_nonempty_str_or_list(task_section, "modredundant")
+        zero_token_pattern = re.compile(r"(?<!\S)0(?!\S)")
+        for idx, line in enumerate(lines):
+            if zero_token_pattern.search(line):
+                raise ValueError(
+                    "Config key 'gaussian.task.ts.modredundant' must use 1-based "
+                    f"atom indices; found zero in line {idx}: {line!r}."
+                )
+        return lines
     raise ValueError(
         "Gaussian ts config requires either 'constraint_atoms' or 'modredundant'."
     )

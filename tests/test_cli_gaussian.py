@@ -43,7 +43,7 @@ def test_example_gaussian_ts_generation(monkeypatch, tmp_path, capsys) -> None:
     assert str(output) in captured.out
     assert "%chk=water.chk" in text
     assert "#p B3LYP/def2TZVP Opt=ModRedundant" in text
-    assert "B 0 1 F" in text
+    assert "B 1 2 F" in text
     assert "--Link1--" in text
     assert (
         "#p B3LYP/def2TZVP Opt=(TS,CalcFC,NoEigenTest,NoFreeze) Freq Geom=AllCheck Guess=Read"
@@ -168,8 +168,8 @@ def test_gaussian_ts_supports_multiple_constraint_pairs(
 
     assert exit_code == 0
     assert str(output) in captured.out
-    assert "B 0 1 F" in text
-    assert "B 2 3 F" in text
+    assert "B 1 2 F" in text
+    assert "B 3 4 F" in text
 
 
 def test_gaussian_ts_legacy_modredundant_still_supported(
@@ -180,7 +180,7 @@ def test_gaussian_ts_legacy_modredundant_still_supported(
         '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
         "constraint_atoms = [[0, 1]]\n",
         '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
-        'modredundant = ["B 0 1 F", "B 2 3 F"]\n',
+        'modredundant = ["B 1 2 F", "B 3 4 F"]\n',
         1,
     )
     config.write_text(config_text, encoding="utf-8")
@@ -198,8 +198,36 @@ def test_gaussian_ts_legacy_modredundant_still_supported(
 
     assert exit_code == 0
     assert str(output) in captured.out
-    assert "B 0 1 F" in text
-    assert "B 2 3 F" in text
+    assert "B 1 2 F" in text
+    assert "B 3 4 F" in text
+
+
+def test_gaussian_ts_modredundant_zero_index_errors(monkeypatch, tmp_path) -> None:
+    xyz, config = write_example_files(tmp_path, kind="ts", engine="gaussian")
+    config_text = config.read_text(encoding="utf-8").replace(
+        '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
+        "constraint_atoms = [[0, 1]]\n",
+        '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
+        'modredundant = ["B 0 1 F"]\n',
+        1,
+    )
+    config.write_text(config_text, encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["qcinput", str(xyz), "--config", str(config)],
+    )
+
+    try:
+        main()
+    except SystemExit as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("Expected SystemExit for zero-index modredundant.")
+
+    assert "modredundant" in message
+    assert "1-based" in message
 
 
 def test_gaussian_extra_keywords_applied_to_int_and_ts(
