@@ -44,7 +44,7 @@ def _add_init_config_args(parser: argparse.ArgumentParser) -> None:
         "--kind",
         choices=("int", "ts", "sp"),
         default="int",
-        help="Template kind to initialize. Choices: int, ts, sp.",
+        help="Default active kind in generated config. Choices: int, ts, sp.",
     )
     parser.add_argument(
         "-o",

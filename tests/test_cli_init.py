@@ -26,10 +26,10 @@ def test_init_config_creates_default_file(monkeypatch, tmp_path, capsys) -> None
     assert "[gaussian.task.int]" in text
     assert 'keywords = ["Opt", "Freq"]' in text
     assert 'route = ["Opt", "Freq"]' in text
-    assert "[orca.task.ts]" not in text
-    assert "[gaussian.task.ts]" not in text
-    assert "[orca.task.sp]" not in text
-    assert "[gaussian.task.sp]" not in text
+    assert "[orca.task.ts]" in text
+    assert "[gaussian.task.ts]" in text
+    assert "[orca.task.sp]" in text
+    assert "[gaussian.task.sp]" in text
 
 
 def test_init_config_supports_ts_template(monkeypatch, tmp_path, capsys) -> None:
@@ -58,10 +58,10 @@ def test_init_config_supports_ts_template(monkeypatch, tmp_path, capsys) -> None
         'step2_route = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", '
         '"Geom=AllCheck", "Guess=Read"]'
     ) in text
-    assert "[orca.task.int]" not in text
-    assert "[gaussian.task.int]" not in text
-    assert "[orca.task.sp]" not in text
-    assert "[gaussian.task.sp]" not in text
+    assert "[orca.task.int]" in text
+    assert "[gaussian.task.int]" in text
+    assert "[orca.task.sp]" in text
+    assert "[gaussian.task.sp]" in text
 
 
 def test_init_config_supports_sp_template(monkeypatch, tmp_path, capsys) -> None:
@@ -80,10 +80,10 @@ def test_init_config_supports_sp_template(monkeypatch, tmp_path, capsys) -> None
     assert "[gaussian.task.sp]" in text
     assert 'keywords = ["SP"]' in text
     assert 'route = ["SP"]' in text
-    assert "[orca.task.int]" not in text
-    assert "[gaussian.task.int]" not in text
-    assert "[orca.task.ts]" not in text
-    assert "[gaussian.task.ts]" not in text
+    assert "[orca.task.int]" in text
+    assert "[gaussian.task.int]" in text
+    assert "[orca.task.ts]" in text
+    assert "[gaussian.task.ts]" in text
 
 
 def test_init_config_errors_if_exists_without_force(monkeypatch, tmp_path) -> None:

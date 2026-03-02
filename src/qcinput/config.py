@@ -38,53 +38,9 @@ def default_config_path() -> Path:
     return Path.cwd() / "qcinput.toml"
 
 
-def _task_keywords(kind: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    if kind == "int":
-        return ("Opt", "Freq"), ("Opt", "Freq")
-    if kind == "sp":
-        return ("SP",), ("SP",)
-    raise ValueError("Config kind must be one of: int, ts, sp.")
-
-
 def default_config_toml(kind: str = "int") -> str:
-    if kind == "ts":
-        return """[qcinput]
-engine = "orca" # "orca" or "gaussian"
-kind = "ts"
-
-[molecule]
-charge = 0
-multiplicity = 1
-
-[orca]
-nprocs = 8
-maxcore = 4000
-base_keywords = ["r2scan-3c"]
-extra_keywords = []
-smd = false
-smd_solvent = "toluene"
-
-[orca.task.ts]
-step1_keywords = ["Opt"]
-step2_keywords = ["OptTS", "Freq"]
-constraint_atoms = [[0, 1]]
-calc_hess = true
-
-[gaussian]
-nprocshared = 8
-mem = "32GB"
-method_basis = "B3LYP/def2SVP"
-extra_keywords = []
-
-[gaussian.task.ts]
-step1_route = ["Opt=ModRedundant"]
-constraint_atoms = [[0, 1]]
-step2_route = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", "Geom=AllCheck", "Guess=Read"]
-"""
-
-    orca_keywords, gaussian_route = _task_keywords(kind)
-    orca_keywords_toml = ", ".join(f'"{kw}"' for kw in orca_keywords)
-    gaussian_route_toml = ", ".join(f'"{kw}"' for kw in gaussian_route)
+    if kind not in ("int", "ts", "sp"):
+        raise ValueError("Config kind must be one of: int, ts, sp.")
     return f"""[qcinput]
 engine = "orca" # "orca" or "gaussian"
 kind = "{kind}"
@@ -101,8 +57,17 @@ extra_keywords = []
 smd = false
 smd_solvent = "toluene"
 
-[orca.task.{kind}]
-keywords = [{orca_keywords_toml}]
+[orca.task.int]
+keywords = ["Opt", "Freq"]
+
+[orca.task.ts]
+step1_keywords = ["Opt"]
+step2_keywords = ["OptTS", "Freq"]
+constraint_atoms = [[0, 1]]
+calc_hess = true
+
+[orca.task.sp]
+keywords = ["SP"]
 
 [gaussian]
 nprocshared = 8
@@ -110,8 +75,16 @@ mem = "32GB"
 method_basis = "B3LYP/def2SVP"
 extra_keywords = []
 
-[gaussian.task.{kind}]
-route = [{gaussian_route_toml}]
+[gaussian.task.int]
+route = ["Opt", "Freq"]
+
+[gaussian.task.ts]
+step1_route = ["Opt=ModRedundant"]
+constraint_atoms = [[0, 1]]
+step2_route = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", "Geom=AllCheck", "Guess=Read"]
+
+[gaussian.task.sp]
+route = ["SP"]
 """
 
 

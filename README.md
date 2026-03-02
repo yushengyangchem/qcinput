@@ -43,6 +43,9 @@ qcinput init-config --kind ts
 qcinput init-config --kind sp
 ```
 
+`init-config` always writes `int/ts/sp` task sections in one TOML file; `--kind`
+only sets the initial active value of `[qcinput].kind`.
+
 Default config path:
 
 ```text
