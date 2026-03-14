@@ -1,7 +1,8 @@
-# qcinput
+# qcinput: Reproducible ORCA/Gaussian input generation from Cartesian geometries and TOML
 
-`qcinput` is a CLI tool that reads an `xyz` or `gjf` geometry, loads task type and keywords
-from TOML, and writes an ORCA or Gaussian input file.
+`qcinput` reads an `xyz` or `gjf` geometry, applies task-specific keywords from a TOML config,
+It reads an `xyz` or `gjf` geometry, applies task-specific keywords from a TOML config,
+and emits ORCA or Gaussian input files for `int`, `ts`, or `sp` jobs.
 
 ## Install With pip
 
