@@ -98,6 +98,7 @@ step2_route = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", "Geom=AllCheck", 
 
 `constraint_atoms` accepts one pair (`[0, 1]`) or multiple pairs
 (`[[0, 1], [2, 3], ...]`) and will be converted to `B i j F` lines.
+**Note:** TOML uses 0-indexed atoms, but Gaussian ModRedundant is 1-indexed; conversion is automatic.
 Legacy `modredundant` is still supported for compatibility.
 `%chk` is auto-generated as `<structure_stem>.chk` (e.g. `water.xyz -> water.chk`).
 This applies to Gaussian `int`, `sp`, and `ts`.
