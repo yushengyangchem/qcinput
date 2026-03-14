@@ -119,12 +119,12 @@ multiplicity = 1
 [orca]
 nprocs = 8
 maxcore = 4000
-base_keywords = ["r2scan-3c", "D4", "def2-mTZVPP"]
 extra_keywords = ["TightSCF", "NormalSCF"] # optional, appended at end
 smd = false # optional
 smd_solvent = "toluene"
 
 [orca.task.int]
+base_keywords = ["B3LYP", "def2-TZVP"]
 keywords = ["Opt", "Freq"]
 
 [gaussian]

@@ -53,15 +53,16 @@ multiplicity = 1
 [orca]
 nprocs = 8
 maxcore = 4000
-base_keywords = ["r2scan-3c"]
 extra_keywords = []
 smd = false
 smd_solvent = "toluene"
 
 [orca.task.int]
+base_keywords = ["r2scan-3c"]
 keywords = ["Opt", "Freq"]
 
 [orca.task.ts]
+base_keywords = ["r2scan-3c"]
 step1_keywords = ["Opt"]
 step2_keywords = ["OptTS", "Freq"]
 # currently only bond constraints are supported for constraint_atoms.
@@ -69,6 +70,7 @@ constraint_atoms = [[0, 1]] # keep 0-based atom indices
 calc_hess = true
 
 [orca.task.sp]
+base_keywords = ["r2scan-3c"]
 keywords = ["SP"]
 
 [gaussian]
@@ -202,6 +204,14 @@ def _as_int_pair_list(data: dict[str, Any], key: str) -> tuple[tuple[int, int], 
     return tuple(pairs)
 
 
+def _orca_task_base_keywords(
+    orca_section: dict[str, Any], task_section: dict[str, Any]
+) -> tuple[str, ...]:
+    if "base_keywords" in task_section:
+        return _as_keyword_list(task_section, "base_keywords")
+    return _as_keyword_list(orca_section, "base_keywords")
+
+
 def _gaussian_modredundant_lines(
     task_section: dict[str, Any],
 ) -> tuple[str, ...]:
@@ -253,7 +263,7 @@ def _load_orca_config(
             task_keywords=(),
             nprocs=_as_int(orca, "nprocs"),
             maxcore=_as_int(orca, "maxcore"),
-            base_keywords=_as_keyword_list(orca, "base_keywords"),
+            base_keywords=_orca_task_base_keywords(orca, task_section),
             orca_extra_keywords=_as_optional_keyword_list(orca, "extra_keywords"),
             orca_smd=orca_smd,
             orca_smd_solvent=orca_smd_solvent,
@@ -276,7 +286,7 @@ def _load_orca_config(
         task_keywords=_as_keyword_list(task_section, "keywords"),
         nprocs=_as_int(orca, "nprocs"),
         maxcore=_as_int(orca, "maxcore"),
-        base_keywords=_as_keyword_list(orca, "base_keywords"),
+        base_keywords=_orca_task_base_keywords(orca, task_section),
         orca_extra_keywords=_as_optional_keyword_list(orca, "extra_keywords"),
         orca_smd=orca_smd,
         orca_smd_solvent=orca_smd_solvent,
