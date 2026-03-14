@@ -91,9 +91,9 @@ Gaussian TS settings (`Link1`):
 
 ```toml
 [gaussian.task.ts]
-step1_route = ["Opt=ModRedundant"]
+step1_keywords = ["Opt=ModRedundant"]
 constraint_atoms = [[0, 1], [2, 3]]
-step2_route = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", "Geom=AllCheck", "Guess=Read"]
+step2_keywords = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", "Geom=AllCheck", "Guess=Read"]
 ```
 
 `constraint_atoms` accepts one pair (`[0, 1]`) or multiple pairs
@@ -132,11 +132,11 @@ keywords = ["Opt", "Freq"]
 [gaussian]
 nprocshared = 8
 mem = "8GB"
-extra_keywords = ["SCF=Tight"] # optional, appended at end of route
+extra_keywords = ["SCF=Tight"] # optional, appended at end of keywords
 
 [gaussian.task.int]
 base_keywords = ["B3LYP/def2TZVP"]
-route = ["Opt", "Freq"]
+keywords = ["Opt", "Freq"]
 ```
 
 ## Output Snippet

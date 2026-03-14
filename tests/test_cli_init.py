@@ -25,7 +25,7 @@ def test_init_config_creates_default_file(monkeypatch, tmp_path, capsys) -> None
     assert "[orca.task.int]" in text
     assert "[gaussian.task.int]" in text
     assert 'keywords = ["Opt", "Freq"]' in text
-    assert 'route = ["Opt", "Freq"]' in text
+    assert 'keywords = ["Opt", "Freq"]' in text
     assert "[orca.task.ts]" in text
     assert "[gaussian.task.ts]" in text
     assert "[orca.task.sp]" in text
@@ -52,10 +52,10 @@ def test_init_config_supports_ts_template(monkeypatch, tmp_path, capsys) -> None
     assert "calc_hess = true" in text
     assert "smd = false" in text
     assert 'smd_solvent = "toluene"' in text
-    assert 'step1_route = ["Opt=ModRedundant"]' in text
+    assert 'step1_keywords = ["Opt=ModRedundant"]' in text
     assert "constraint_atoms = [[0, 1]]" in text
     assert (
-        'step2_route = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", '
+        'step2_keywords = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", '
         '"Geom=AllCheck", "Guess=Read"]'
     ) in text
     assert "[orca.task.int]" in text
@@ -79,7 +79,7 @@ def test_init_config_supports_sp_template(monkeypatch, tmp_path, capsys) -> None
     assert "[orca.task.sp]" in text
     assert "[gaussian.task.sp]" in text
     assert 'keywords = ["SP"]' in text
-    assert 'route = ["SP"]' in text
+    assert 'keywords = ["SP"]' in text
     assert "[orca.task.int]" in text
     assert "[gaussian.task.int]" in text
     assert "[orca.task.ts]" in text

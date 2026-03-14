@@ -17,7 +17,7 @@ def render_gaussian_input(
     ):
         raise ValueError("Gaussian config is incomplete.")
     chk_name = f"{Path(source_structure_name).stem}.chk"
-    route = " ".join(
+    keywords = " ".join(
         (
             *config.gaussian_base_keywords,
             *config.task_keywords,
@@ -28,7 +28,7 @@ def render_gaussian_input(
         f"%chk={chk_name}",
         f"%NProcShared={config.nprocshared}",
         f"%Mem={config.mem}",
-        f"#P {route}",
+        f"#P {keywords}",
         "",
         __generator_banner__,
         "",
@@ -54,24 +54,24 @@ def render_gaussian_two_step_ts_input(
     ):
         raise ValueError("Gaussian config is incomplete.")
     if (
-        not config.gaussian_ts_step1_route
+        not config.gaussian_ts_step1_keywords
         or not config.gaussian_ts_modredundant
-        or not config.gaussian_ts_step2_route
+        or not config.gaussian_ts_step2_keywords
     ):
         raise ValueError("Gaussian ts config is incomplete.")
 
     chk_name = f"{Path(source_structure_name).stem}.chk"
-    step1_route = " ".join(
+    step1_keywords = " ".join(
         (
             *config.gaussian_base_keywords,
-            *config.gaussian_ts_step1_route,
+            *config.gaussian_ts_step1_keywords,
             *config.gaussian_extra_keywords,
         )
     )
-    step2_route = " ".join(
+    step2_keywords = " ".join(
         (
             *config.gaussian_base_keywords,
-            *config.gaussian_ts_step2_route,
+            *config.gaussian_ts_step2_keywords,
             *config.gaussian_extra_keywords,
         )
     )
@@ -79,7 +79,7 @@ def render_gaussian_two_step_ts_input(
         f"%chk={chk_name}",
         f"%nprocshared={config.nprocshared}",
         f"%mem={config.mem}",
-        f"#p {step1_route}",
+        f"#p {step1_keywords}",
         "",
         __generator_banner__,
         "",
@@ -95,7 +95,7 @@ def render_gaussian_two_step_ts_input(
             f"%chk={chk_name}",
             f"%nprocshared={config.nprocshared}",
             f"%mem={config.mem}",
-            f"#p {step2_route}",
+            f"#p {step2_keywords}",
             "",
             "",
         ]

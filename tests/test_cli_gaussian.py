@@ -96,8 +96,8 @@ def test_gaussian_default_output_suffix(monkeypatch, tmp_path, capsys) -> None:
 def test_gaussian_missing_base_keywords_errors(monkeypatch, tmp_path) -> None:
     xyz, config = write_example_files(tmp_path, kind="sp", engine="gaussian")
     config_text = config.read_text(encoding="utf-8").replace(
-        'base_keywords = ["B3LYP/def2TZVP"]\nroute = ["SP"]',
-        'route = ["SP"]',
+        'base_keywords = ["B3LYP/def2TZVP"]\nkeywords = ["SP"]',
+        'keywords = ["SP"]',
         1,
     )
     config.write_text(config_text, encoding="utf-8")

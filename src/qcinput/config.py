@@ -27,9 +27,9 @@ class QCInputConfig:
     orca_ts_step2_keywords: tuple[str, ...] = ()
     orca_ts_constraint_atoms: tuple[tuple[int, int], ...] = ()
     orca_ts_calc_hess: bool | None = None
-    gaussian_ts_step1_route: tuple[str, ...] = ()
+    gaussian_ts_step1_keywords: tuple[str, ...] = ()
     gaussian_ts_modredundant: tuple[str, ...] = ()
-    gaussian_ts_step2_route: tuple[str, ...] = ()
+    gaussian_ts_step2_keywords: tuple[str, ...] = ()
 
 
 def default_config_path() -> Path:
@@ -80,20 +80,20 @@ extra_keywords = []
 
 [gaussian.task.int]
 base_keywords = ["B3LYP/def2SVP"]
-route = ["Opt", "Freq"]
+keywords = ["Opt", "Freq"]
 
 [gaussian.task.ts]
 base_keywords = ["B3LYP/def2SVP"]
-step1_route = ["Opt=ModRedundant"]
+step1_keywords = ["Opt=ModRedundant"]
 # constraint_atoms in TOML uses 0-based indices.
 # Gaussian output is rendered as 1-based (e.g. [0,1] -> B 1 2 F).
 # currently only bond constraints are supported for constraint_atoms.
 constraint_atoms = [[0, 1]]
-step2_route = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", "Geom=AllCheck", "Guess=Read"]
+step2_keywords = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", "Geom=AllCheck", "Guess=Read"]
 
 [gaussian.task.sp]
 base_keywords = ["B3LYP/def2SVP"]
-route = ["SP"]
+keywords = ["SP"]
 """
 
 
@@ -331,16 +331,16 @@ def _load_gaussian_config(
             gaussian_extra_keywords=_as_optional_keyword_list(
                 gaussian, "extra_keywords"
             ),
-            gaussian_ts_step1_route=_as_keyword_list(task_section, "step1_route"),
+            gaussian_ts_step1_keywords=_as_keyword_list(task_section, "step1_keywords"),
             gaussian_ts_modredundant=_gaussian_modredundant_lines(task_section),
-            gaussian_ts_step2_route=_as_keyword_list(task_section, "step2_route"),
+            gaussian_ts_step2_keywords=_as_keyword_list(task_section, "step2_keywords"),
         )
     return QCInputConfig(
         engine="gaussian",
         kind=kind,
         charge=_as_int(molecule, "charge"),
         multiplicity=_as_int(molecule, "multiplicity"),
-        task_keywords=_as_keyword_list(task_section, "route"),
+        task_keywords=_as_keyword_list(task_section, "keywords"),
         nprocshared=_as_int(gaussian, "nprocshared"),
         mem=_as_nonempty_str(gaussian, "mem"),
         gaussian_base_keywords=_gaussian_task_base_keywords(gaussian, task_section),
