@@ -21,7 +21,7 @@ class QCInputConfig:
     orca_smd_solvent: str = "toluene"
     nprocshared: int | None = None
     mem: str | None = None
-    method_basis: str | None = None
+    gaussian_base_keywords: tuple[str, ...] = ()
     gaussian_extra_keywords: tuple[str, ...] = ()
     orca_ts_step1_keywords: tuple[str, ...] = ()
     orca_ts_step2_keywords: tuple[str, ...] = ()
@@ -76,13 +76,14 @@ keywords = ["SP"]
 [gaussian]
 nprocshared = 8
 mem = "32GB"
-method_basis = "B3LYP/def2SVP"
 extra_keywords = []
 
 [gaussian.task.int]
+base_keywords = ["B3LYP/def2SVP"]
 route = ["Opt", "Freq"]
 
 [gaussian.task.ts]
+base_keywords = ["B3LYP/def2SVP"]
 step1_route = ["Opt=ModRedundant"]
 # constraint_atoms in TOML uses 0-based indices.
 # Gaussian output is rendered as 1-based (e.g. [0,1] -> B 1 2 F).
@@ -91,6 +92,7 @@ constraint_atoms = [[0, 1]]
 step2_route = ["Opt=(TS,CalcFC,NoEigenTest,NoFreeze)", "Freq", "Geom=AllCheck", "Guess=Read"]
 
 [gaussian.task.sp]
+base_keywords = ["B3LYP/def2SVP"]
 route = ["SP"]
 """
 
@@ -212,6 +214,14 @@ def _orca_task_base_keywords(
     return _as_keyword_list(orca_section, "base_keywords")
 
 
+def _gaussian_task_base_keywords(
+    gaussian_section: dict[str, Any], task_section: dict[str, Any]
+) -> tuple[str, ...]:
+    if "base_keywords" in task_section:
+        return _as_keyword_list(task_section, "base_keywords")
+    return _as_keyword_list(gaussian_section, "base_keywords")
+
+
 def _gaussian_modredundant_lines(
     task_section: dict[str, Any],
 ) -> tuple[str, ...]:
@@ -317,7 +327,7 @@ def _load_gaussian_config(
             task_keywords=(),
             nprocshared=_as_int(gaussian, "nprocshared"),
             mem=_as_nonempty_str(gaussian, "mem"),
-            method_basis=_as_nonempty_str(gaussian, "method_basis"),
+            gaussian_base_keywords=_gaussian_task_base_keywords(gaussian, task_section),
             gaussian_extra_keywords=_as_optional_keyword_list(
                 gaussian, "extra_keywords"
             ),
@@ -333,7 +343,7 @@ def _load_gaussian_config(
         task_keywords=_as_keyword_list(task_section, "route"),
         nprocshared=_as_int(gaussian, "nprocshared"),
         mem=_as_nonempty_str(gaussian, "mem"),
-        method_basis=_as_nonempty_str(gaussian, "method_basis"),
+        gaussian_base_keywords=_gaussian_task_base_keywords(gaussian, task_section),
         gaussian_extra_keywords=_as_optional_keyword_list(gaussian, "extra_keywords"),
     )
 

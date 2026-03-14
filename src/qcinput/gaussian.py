@@ -10,11 +10,19 @@ def render_gaussian_input(
     config: QCInputConfig,
     source_structure_name: str,
 ) -> str:
-    if config.nprocshared is None or config.mem is None or config.method_basis is None:
+    if (
+        config.nprocshared is None
+        or config.mem is None
+        or not config.gaussian_base_keywords
+    ):
         raise ValueError("Gaussian config is incomplete.")
     chk_name = f"{Path(source_structure_name).stem}.chk"
     route = " ".join(
-        (config.method_basis, *config.task_keywords, *config.gaussian_extra_keywords)
+        (
+            *config.gaussian_base_keywords,
+            *config.task_keywords,
+            *config.gaussian_extra_keywords,
+        )
     )
     lines = [
         f"%chk={chk_name}",
@@ -39,7 +47,11 @@ def render_gaussian_two_step_ts_input(
     config: QCInputConfig,
     source_structure_name: str,
 ) -> str:
-    if config.nprocshared is None or config.mem is None or config.method_basis is None:
+    if (
+        config.nprocshared is None
+        or config.mem is None
+        or not config.gaussian_base_keywords
+    ):
         raise ValueError("Gaussian config is incomplete.")
     if (
         not config.gaussian_ts_step1_route
@@ -51,14 +63,14 @@ def render_gaussian_two_step_ts_input(
     chk_name = f"{Path(source_structure_name).stem}.chk"
     step1_route = " ".join(
         (
-            config.method_basis,
+            *config.gaussian_base_keywords,
             *config.gaussian_ts_step1_route,
             *config.gaussian_extra_keywords,
         )
     )
     step2_route = " ".join(
         (
-            config.method_basis,
+            *config.gaussian_base_keywords,
             *config.gaussian_ts_step2_route,
             *config.gaussian_extra_keywords,
         )

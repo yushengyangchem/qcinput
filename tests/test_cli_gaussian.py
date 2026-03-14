@@ -93,10 +93,12 @@ def test_gaussian_default_output_suffix(monkeypatch, tmp_path, capsys) -> None:
     assert expected_output.exists()
 
 
-def test_gaussian_missing_method_basis_errors(monkeypatch, tmp_path) -> None:
+def test_gaussian_missing_base_keywords_errors(monkeypatch, tmp_path) -> None:
     xyz, config = write_example_files(tmp_path, kind="sp", engine="gaussian")
     config_text = config.read_text(encoding="utf-8").replace(
-        'method_basis = "B3LYP/def2TZVP"\n', "", 1
+        'base_keywords = ["B3LYP/def2TZVP"]\nroute = ["SP"]',
+        'route = ["SP"]',
+        1,
     )
     config.write_text(config_text, encoding="utf-8")
 
@@ -111,19 +113,18 @@ def test_gaussian_missing_method_basis_errors(monkeypatch, tmp_path) -> None:
     except SystemExit as exc:
         message = str(exc)
     else:
-        raise AssertionError("Expected SystemExit for missing gaussian.method_basis.")
+        raise AssertionError("Expected SystemExit for missing gaussian.base_keywords.")
 
-    assert "method_basis" in message
+    assert "base_keywords" in message
 
 
 def test_gaussian_ts_missing_constraint_atoms_errors(monkeypatch, tmp_path) -> None:
     xyz, config = write_example_files(tmp_path, kind="ts", engine="gaussian")
-    config_text = config.read_text(encoding="utf-8").replace(
-        '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
-        "constraint_atoms = [[0, 1]]\n",
-        '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n',
-        1,
-    )
+    config_text = config.read_text(encoding="utf-8")
+    marker = "[gaussian.task.ts]\n"
+    head, tail = config_text.split(marker, 1)
+    tail = tail.replace("constraint_atoms = [[0, 1]]\n", "", 1)
+    config_text = head + marker + tail
     config.write_text(config_text, encoding="utf-8")
 
     monkeypatch.setattr(
@@ -146,13 +147,15 @@ def test_gaussian_ts_supports_multiple_constraint_pairs(
     monkeypatch, tmp_path, capsys
 ) -> None:
     xyz, config = write_example_files(tmp_path, kind="ts", engine="gaussian")
-    config_text = config.read_text(encoding="utf-8").replace(
-        '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
+    config_text = config.read_text(encoding="utf-8")
+    marker = "[gaussian.task.ts]\n"
+    head, tail = config_text.split(marker, 1)
+    tail = tail.replace(
         "constraint_atoms = [[0, 1]]\n",
-        '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
         "constraint_atoms = [[0, 1], [2, 3]]\n",
         1,
     )
+    config_text = head + marker + tail
     config.write_text(config_text, encoding="utf-8")
     output = tmp_path / "water_ts_multi_constraints.gjf"
 
@@ -176,13 +179,15 @@ def test_gaussian_ts_legacy_modredundant_still_supported(
     monkeypatch, tmp_path, capsys
 ) -> None:
     xyz, config = write_example_files(tmp_path, kind="ts", engine="gaussian")
-    config_text = config.read_text(encoding="utf-8").replace(
-        '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
+    config_text = config.read_text(encoding="utf-8")
+    marker = "[gaussian.task.ts]\n"
+    head, tail = config_text.split(marker, 1)
+    tail = tail.replace(
         "constraint_atoms = [[0, 1]]\n",
-        '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
         'modredundant = ["B 1 2 F", "B 3 4 F"]\n',
         1,
     )
+    config_text = head + marker + tail
     config.write_text(config_text, encoding="utf-8")
     output = tmp_path / "water_ts_legacy_modredundant.gjf"
 
@@ -204,13 +209,15 @@ def test_gaussian_ts_legacy_modredundant_still_supported(
 
 def test_gaussian_ts_modredundant_zero_index_errors(monkeypatch, tmp_path) -> None:
     xyz, config = write_example_files(tmp_path, kind="ts", engine="gaussian")
-    config_text = config.read_text(encoding="utf-8").replace(
-        '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
+    config_text = config.read_text(encoding="utf-8")
+    marker = "[gaussian.task.ts]\n"
+    head, tail = config_text.split(marker, 1)
+    tail = tail.replace(
         "constraint_atoms = [[0, 1]]\n",
-        '[gaussian.task.ts]\nstep1_route = ["Opt=ModRedundant"]\n'
         'modredundant = ["B 0 1 F"]\n',
         1,
     )
+    config_text = head + marker + tail
     config.write_text(config_text, encoding="utf-8")
 
     monkeypatch.setattr(
@@ -234,9 +241,10 @@ def test_gaussian_extra_keywords_applied_to_int_and_ts(
     monkeypatch, tmp_path, capsys
 ) -> None:
     xyz, config = write_example_files(tmp_path, kind="int", engine="gaussian")
-    config_text = config.read_text(encoding="utf-8").replace(
-        'method_basis = "B3LYP/def2TZVP"',
-        'method_basis = "B3LYP/def2TZVP"\nextra_keywords = ["SCF=Tight", "Int=UltraFine"]',
+    config_text = config.read_text(encoding="utf-8")
+    config_text = config_text.replace(
+        'mem = "8GB"',
+        'mem = "8GB"\nextra_keywords = ["SCF=Tight", "Int=UltraFine"]',
         1,
     )
     config.write_text(config_text, encoding="utf-8")
