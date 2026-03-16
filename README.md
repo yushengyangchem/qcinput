@@ -1,4 +1,4 @@
-# qcinput: Reproducible ORCA/Gaussian input generation from Cartesian geometries and TOML
+# qcinput
 
 `qcinput` reads an `xyz` or `gjf` geometry, applies task-specific keywords from a TOML config,
 It reads an `xyz` or `gjf` geometry, applies task-specific keywords from a TOML config,
