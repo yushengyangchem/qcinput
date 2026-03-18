@@ -18,7 +18,7 @@ jobs:
         uses: DeterminateSystems/update-flake-lock@main
         with:
           token: ${{ secrets.FLAKE_UPDATE_TOKEN }}
-          pr-title: "Update flake.lock"
+          pr-title: "chore(ci): update flake.lock"
           pr-labels: |
             dependencies
             automated
