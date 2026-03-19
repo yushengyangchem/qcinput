@@ -193,11 +193,13 @@ def test_orca_extra_keywords_applied_to_int_and_ts(
     assert "! B3LYP def2-TZVP OptTS Freq TightSCF NormalSCF NoPop" in text_ts
 
 
-def test_orca_smd_applied_to_int_and_ts(monkeypatch, tmp_path, capsys) -> None:
+def test_orca_task_level_smd_applied_independently(
+    monkeypatch, tmp_path, capsys
+) -> None:
     xyz, config = write_example_files(tmp_path, kind="int", engine="orca")
     config_text = config.read_text(encoding="utf-8").replace(
-        "maxcore = 4000",
-        'maxcore = 4000\nsmd = true\nsmd_solvent = "toluene"',
+        'smd = false\nsmd_solvent = "toluene"',
+        'smd = true\nsmd_solvent = "water"',
         1,
     )
     config.write_text(config_text, encoding="utf-8")
@@ -216,10 +218,15 @@ def test_orca_smd_applied_to_int_and_ts(monkeypatch, tmp_path, capsys) -> None:
     assert str(output_int) in captured.out
     assert "%cpcm" in text_int
     assert "  SMD true" in text_int
-    assert '  SMDsolvent "toluene"' in text_int
+    assert '  SMDsolvent "water"' in text_int
 
     config_ts_text = config.read_text(encoding="utf-8").replace(
         'kind = "int"', 'kind = "ts"', 1
+    )
+    config_ts_text = config_ts_text.replace(
+        'step2_keywords = ["OptTS", "Freq"]\nsmd = false\nsmd_solvent = "toluene"',
+        'step2_keywords = ["OptTS", "Freq"]\nsmd = true\nsmd_solvent = "acetonitrile"',
+        1,
     )
     config.write_text(config_ts_text, encoding="utf-8")
     output_ts = tmp_path / "water_smd_ts.inp"
@@ -236,4 +243,35 @@ def test_orca_smd_applied_to_int_and_ts(monkeypatch, tmp_path, capsys) -> None:
     assert str(output_ts) in captured.out
     assert text_ts.count("%cpcm") == 2
     assert text_ts.count("  SMD true") == 2
-    assert text_ts.count('  SMDsolvent "toluene"') == 2
+    assert text_ts.count('  SMDsolvent "acetonitrile"') == 2
+
+
+def test_orca_global_smd_still_used_as_fallback(monkeypatch, tmp_path, capsys) -> None:
+    xyz, config = write_example_files(tmp_path, kind="sp", engine="orca")
+    config_text = config.read_text(encoding="utf-8").replace(
+        "maxcore = 4000",
+        'maxcore = 4000\nsmd = true\nsmd_solvent = "benzene"',
+        1,
+    )
+    config_text = config_text.replace(
+        '\n[orca.task.sp]\nbase_keywords = ["B3LYP", "def2-TZVP"]\nkeywords = ["SP"]\nsmd = false\nsmd_solvent = "toluene"\n',
+        '\n[orca.task.sp]\nbase_keywords = ["B3LYP", "def2-TZVP"]\nkeywords = ["SP"]\n',
+        1,
+    )
+    config.write_text(config_text, encoding="utf-8")
+
+    output = tmp_path / "water_smd_sp.inp"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["qcinput", str(xyz), "--config", str(config), "-o", str(output)],
+    )
+    exit_code = main()
+    captured = capsys.readouterr()
+    text = output.read_text(encoding="utf-8")
+
+    assert exit_code == 0
+    assert str(output) in captured.out
+    assert "%cpcm" in text
+    assert "  SMD true" in text
+    assert '  SMDsolvent "benzene"' in text

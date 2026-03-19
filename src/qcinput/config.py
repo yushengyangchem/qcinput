@@ -54,17 +54,19 @@ multiplicity = 1
 nprocs = 8
 maxcore = 4000
 extra_keywords = []
-smd = false
-smd_solvent = "toluene"
 
 [orca.task.int]
 base_keywords = ["r2scan-3c"]
 keywords = ["Opt", "Freq"]
+smd = false
+smd_solvent = "toluene"
 
 [orca.task.ts]
 base_keywords = ["r2scan-3c"]
 step1_keywords = ["Opt"]
 step2_keywords = ["OptTS", "Freq"]
+smd = false
+smd_solvent = "toluene"
 # currently only bond constraints are supported for constraint_atoms.
 constraint_atoms = [[0, 1]] # keep 0-based atom indices
 calc_hess = true
@@ -72,6 +74,8 @@ calc_hess = true
 [orca.task.sp]
 base_keywords = ["r2scan-3c"]
 keywords = ["SP"]
+smd = false
+smd_solvent = "toluene"
 
 [gaussian]
 nprocshared = 8
@@ -258,13 +262,23 @@ def _load_orca_config(
     task_section = orca_task.get(kind)
     if not isinstance(task_section, dict):
         raise ValueError(f"Missing [orca.task.{kind}] table in config.")
+    orca_smd = _as_optional_bool(
+        task_section,
+        "smd",
+        default=_as_optional_bool(orca, "smd", default=False),
+    )
+    orca_smd_solvent = _as_optional_nonempty_str(
+        task_section,
+        "smd_solvent",
+        default=_as_optional_nonempty_str(orca, "smd_solvent", default="toluene"),
+    )
+    if orca_smd and not orca_smd_solvent:
+        if "smd_solvent" in task_section:
+            raise ValueError(
+                f"Config key 'orca.task.{kind}.smd_solvent' must be set when smd=true."
+            )
+        raise ValueError("Config key 'orca.smd_solvent' must be set when smd=true.")
     if kind == "ts":
-        orca_smd = _as_optional_bool(orca, "smd", default=False)
-        orca_smd_solvent = _as_optional_nonempty_str(
-            orca, "smd_solvent", default="toluene"
-        )
-        if orca_smd and not orca_smd_solvent:
-            raise ValueError("Config key 'orca.smd_solvent' must be set when smd=true.")
         return QCInputConfig(
             engine="orca",
             kind=kind,
@@ -284,10 +298,6 @@ def _load_orca_config(
             ),
             orca_ts_calc_hess=_as_bool(task_section, "calc_hess"),
         )
-    orca_smd = _as_optional_bool(orca, "smd", default=False)
-    orca_smd_solvent = _as_optional_nonempty_str(orca, "smd_solvent", default="toluene")
-    if orca_smd and not orca_smd_solvent:
-        raise ValueError("Config key 'orca.smd_solvent' must be set when smd=true.")
     return QCInputConfig(
         engine="orca",
         kind=kind,

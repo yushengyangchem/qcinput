@@ -19,10 +19,10 @@ def test_init_config_creates_default_file(monkeypatch, tmp_path, capsys) -> None
     assert "[qcinput]" in text
     assert "[orca]" in text
     assert "[gaussian]" in text
-    assert "smd = false" in text
-    assert 'smd_solvent = "toluene"' in text
     assert 'kind = "int"' in text
     assert "[orca.task.int]" in text
+    assert text.count("smd = false") == 3
+    assert text.count('smd_solvent = "toluene"') == 3
     assert "[gaussian.task.int]" in text
     assert 'keywords = ["Opt", "Freq"]' in text
     assert 'keywords = ["Opt", "Freq"]' in text
@@ -50,8 +50,8 @@ def test_init_config_supports_ts_template(monkeypatch, tmp_path, capsys) -> None
     assert 'step2_keywords = ["OptTS", "Freq"]' in text
     assert "constraint_atoms = [[0, 1]]" in text
     assert "calc_hess = true" in text
-    assert "smd = false" in text
-    assert 'smd_solvent = "toluene"' in text
+    assert text.count("smd = false") == 3
+    assert text.count('smd_solvent = "toluene"') == 3
     assert 'step1_keywords = ["Opt=ModRedundant"]' in text
     assert "constraint_atoms = [[0, 1]]" in text
     assert (
