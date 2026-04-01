@@ -1,4 +1,4 @@
-name: Update flake.lock
+name: "chore(ci): update flake.lock"
 
 on:
   workflow_dispatch:
@@ -21,6 +21,7 @@ jobs:
         with:
           token: ${{ secrets.FLAKE_UPDATE_TOKEN }}
           pr-title: "chore(ci): update flake.lock"
+          commit-msg: "chore(ci): update flake.lock"
           pr-labels: |
             dependencies
             automated
