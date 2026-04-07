@@ -19,13 +19,13 @@ pip install -e .
 ## Usage
 
 ```bash
-qcinput generate <path/to/structure.xyz|.gjf> [-c|--config <path/to/qcinput.toml>] [-o output.inp]
+qcinput generate [<path/to/structure.xyz|.gjf> ...] [--input-dir structures/] [-c|--config <path/to/qcinput.toml>] [-o output.inp | --output-dir outputs/]
 ```
 
 Compatibility shorthand (same behavior):
 
 ```bash
-qcinput <path/to/structure.xyz|.gjf> [-c|--config <path/to/qcinput.toml>] [-o output.inp]
+qcinput [<path/to/structure.xyz|.gjf> ...] [--input-dir structures/] [-c|--config <path/to/qcinput.toml>] [-o output.inp | --output-dir outputs/]
 ```
 
 Show version:
@@ -64,6 +64,19 @@ Example:
 ```bash
 qcinput water.xyz -c qcinput.toml -o water_opt.inp
 ```
+
+Batch examples:
+
+```bash
+qcinput *.xyz *.gjf -c qcinput.toml
+qcinput --input-dir structures/ -c qcinput.toml
+qcinput *.xyz --input-dir structures/ -c qcinput.toml --output-dir generated/
+```
+
+`*.xyz` / `*.gjf` are expanded by your shell before `qcinput` runs.
+`--input-dir` scans the given directory for `.xyz` and `.gjf` files.
+`--output-dir` writes all generated files into one directory and creates it automatically.
+`-o/--output` is only valid when converting a single input structure.
 
 For ORCA and Gaussian, `kind = "ts"` now uses a two-step TS template.
 Use:

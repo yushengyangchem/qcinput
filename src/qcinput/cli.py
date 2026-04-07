@@ -9,6 +9,8 @@ from qcinput.gaussian import render_gaussian_input, render_gaussian_two_step_ts_
 from qcinput.orca import render_orca_input, render_orca_two_step_ts_input
 from qcinput.structure import load_structure
 
+SUPPORTED_STRUCTURE_SUFFIXES = (".xyz", ".gjf")
+
 
 def _merge_keywords(*keyword_groups: tuple[str, ...]) -> tuple[str, ...]:
     merged: list[str] = []
@@ -21,7 +23,18 @@ def _merge_keywords(*keyword_groups: tuple[str, ...]) -> tuple[str, ...]:
 
 def _add_generate_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        "structure", type=Path, help="Path to a structure file (.xyz or .gjf)."
+        "structures",
+        type=Path,
+        nargs="*",
+        help="Path(s) to structure file(s) (.xyz or .gjf).",
+    )
+    parser.add_argument(
+        "--input-dir",
+        dest="input_dirs",
+        type=Path,
+        action="append",
+        default=[],
+        help="Directory containing structure files (.xyz or .gjf). Can be passed multiple times.",
     )
     parser.add_argument(
         "-c",
@@ -30,12 +43,42 @@ def _add_generate_args(parser: argparse.ArgumentParser) -> None:
         default=default_config_path(),
         help="Path to TOML config file. Default: ./qcinput.toml",
     )
-    parser.add_argument(
+    output_group = parser.add_mutually_exclusive_group()
+    output_group.add_argument(
         "-o",
         "--output",
         type=Path,
-        help="Output path. Default: <xyz_stem>.inp|.gjf by engine",
+        help="Output path for a single input file. Default: <structure_stem>.inp|.gjf by engine",
     )
+    output_group.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Directory to write generated files into. Created automatically if needed.",
+    )
+
+
+def _collect_directory_structures(path: Path) -> list[Path]:
+    if not path.exists():
+        raise FileNotFoundError(path)
+    if not path.is_dir():
+        raise ValueError(f"Input path is not a directory: {path}")
+    return sorted(
+        child
+        for child in path.iterdir()
+        if child.is_file() and child.suffix.lower() in SUPPORTED_STRUCTURE_SUFFIXES
+    )
+
+
+def _collect_structure_paths(args: argparse.Namespace) -> list[Path]:
+    structure_paths = list(args.structures)
+    for input_dir in args.input_dirs:
+        structure_paths.extend(_collect_directory_structures(input_dir))
+    if not structure_paths:
+        raise ValueError(
+            "No input structures provided. Pass one or more structure files, "
+            "or use --input-dir with a directory containing .xyz/.gjf files."
+        )
+    return structure_paths
 
 
 def _add_init_config_args(parser: argparse.ArgumentParser) -> None:
@@ -103,89 +146,110 @@ def run_init_config(args: argparse.Namespace) -> int:
 
 def run_generate(args: argparse.Namespace) -> int:
     try:
-        structure = load_structure(args.structure)
-        config = load_config(args.config)
-        if (
-            structure.source_format == "gjf"
-            and structure.charge is not None
-            and structure.multiplicity is not None
-        ):
-            if (
-                config.charge != structure.charge
-                or config.multiplicity != structure.multiplicity
-            ):
-                raise ValueError(
-                    "GJF charge/multiplicity mismatch with config: "
-                    f"gjf={structure.charge}/{structure.multiplicity}, "
-                    f"config={config.charge}/{config.multiplicity}. "
-                    "Please align [molecule] in config with the GJF file."
-                )
-            config = replace(
-                config,
-                charge=structure.charge,
-                multiplicity=structure.multiplicity,
+        structure_paths = _collect_structure_paths(args)
+        if len(structure_paths) > 1 and args.output is not None:
+            raise ValueError(
+                "--output can only be used with a single input structure. "
+                "For multiple inputs, use each input stem or pass --output-dir."
             )
-        default_suffix = ".inp" if config.engine == "orca" else ".gjf"
-        out_path = args.output or args.structure.with_name(
-            f"{args.structure.stem}{default_suffix}"
-        )
-        if config.engine == "orca":
-            if config.kind == "ts":
-                if not config.orca_ts_constraint_atoms:
-                    raise ValueError("ORCA ts config is missing constraint_atoms.")
+
+        if args.output_dir is not None:
+            args.output_dir.mkdir(parents=True, exist_ok=True)
+
+        out_paths: list[Path] = []
+        base_config = load_config(args.config)
+        for structure_path in structure_paths:
+            structure = load_structure(structure_path)
+            config = base_config
+            if (
+                structure.source_format == "gjf"
+                and structure.charge is not None
+                and structure.multiplicity is not None
+            ):
                 if (
-                    config.nprocs is None
-                    or config.maxcore is None
-                    or config.orca_ts_calc_hess is None
+                    config.charge != structure.charge
+                    or config.multiplicity != structure.multiplicity
                 ):
-                    raise ValueError("ORCA ts config is incomplete.")
-                # ORCA compound task writes <input_stem>_Compound_1.xyz after step 1.
-                step2_xyzfile_name = f"{out_path.stem}_Compound_1.xyz"
-                inp_text = render_orca_two_step_ts_input(
-                    xyz_text=structure.xyz_text,
-                    step2_xyzfile_name=step2_xyzfile_name,
-                    charge=config.charge,
-                    multiplicity=config.multiplicity,
-                    step1_keywords=_merge_keywords(
-                        config.base_keywords,
-                        config.orca_ts_step1_keywords,
-                        config.orca_extra_keywords,
-                    ),
-                    step2_keywords=_merge_keywords(
-                        config.base_keywords,
-                        config.orca_ts_step2_keywords,
-                        config.orca_extra_keywords,
-                    ),
-                    constraint_atom_pairs=config.orca_ts_constraint_atoms,
-                    nprocs=config.nprocs,
-                    maxcore=config.maxcore,
-                    calc_hess=config.orca_ts_calc_hess,
-                    smd=config.orca_smd,
-                    smd_solvent=config.orca_smd_solvent,
+                    raise ValueError(
+                        "GJF charge/multiplicity mismatch with config: "
+                        f"gjf={structure.charge}/{structure.multiplicity}, "
+                        f"config={config.charge}/{config.multiplicity}. "
+                        "Please align [molecule] in config with the GJF file."
+                    )
+                config = replace(
+                    config,
+                    charge=structure.charge,
+                    multiplicity=structure.multiplicity,
                 )
+            default_suffix = ".inp" if config.engine == "orca" else ".gjf"
+            if args.output is not None:
+                out_path = args.output
+            elif args.output_dir is not None:
+                out_path = args.output_dir / f"{structure_path.stem}{default_suffix}"
             else:
-                inp_text = render_orca_input(
-                    xyz_text=structure.xyz_text,
-                    config=config,
+                out_path = structure_path.with_name(
+                    f"{structure_path.stem}{default_suffix}"
                 )
-        else:
-            if config.kind == "ts":
-                inp_text = render_gaussian_two_step_ts_input(
-                    xyz_text=structure.xyz_text,
-                    config=config,
-                    source_structure_name=args.structure.name,
-                )
+
+            if config.engine == "orca":
+                if config.kind == "ts":
+                    if not config.orca_ts_constraint_atoms:
+                        raise ValueError("ORCA ts config is missing constraint_atoms.")
+                    if (
+                        config.nprocs is None
+                        or config.maxcore is None
+                        or config.orca_ts_calc_hess is None
+                    ):
+                        raise ValueError("ORCA ts config is incomplete.")
+                    # ORCA compound task writes <input_stem>_Compound_1.xyz after step 1.
+                    step2_xyzfile_name = f"{out_path.stem}_Compound_1.xyz"
+                    inp_text = render_orca_two_step_ts_input(
+                        xyz_text=structure.xyz_text,
+                        step2_xyzfile_name=step2_xyzfile_name,
+                        charge=config.charge,
+                        multiplicity=config.multiplicity,
+                        step1_keywords=_merge_keywords(
+                            config.base_keywords,
+                            config.orca_ts_step1_keywords,
+                            config.orca_extra_keywords,
+                        ),
+                        step2_keywords=_merge_keywords(
+                            config.base_keywords,
+                            config.orca_ts_step2_keywords,
+                            config.orca_extra_keywords,
+                        ),
+                        constraint_atom_pairs=config.orca_ts_constraint_atoms,
+                        nprocs=config.nprocs,
+                        maxcore=config.maxcore,
+                        calc_hess=config.orca_ts_calc_hess,
+                        smd=config.orca_smd,
+                        smd_solvent=config.orca_smd_solvent,
+                    )
+                else:
+                    inp_text = render_orca_input(
+                        xyz_text=structure.xyz_text,
+                        config=config,
+                    )
             else:
-                inp_text = render_gaussian_input(
-                    xyz_text=structure.xyz_text,
-                    config=config,
-                    source_structure_name=args.structure.name,
-                )
-        out_path.write_text(inp_text, encoding="utf-8")
+                if config.kind == "ts":
+                    inp_text = render_gaussian_two_step_ts_input(
+                        xyz_text=structure.xyz_text,
+                        config=config,
+                        source_structure_name=structure_path.name,
+                    )
+                else:
+                    inp_text = render_gaussian_input(
+                        xyz_text=structure.xyz_text,
+                        config=config,
+                        source_structure_name=structure_path.name,
+                    )
+            out_path.write_text(inp_text, encoding="utf-8")
+            out_paths.append(out_path)
     except (FileNotFoundError, ValueError) as exc:
         raise SystemExit(f"error: {exc}") from exc
 
-    print(out_path)
+    for out_path in out_paths:
+        print(out_path)
     return 0
 
 

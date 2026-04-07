@@ -92,6 +92,139 @@ def test_default_config_path_uses_cwd(monkeypatch, tmp_path, capsys) -> None:
     assert "! Opt Freq B3LYP def2-TZVP NoPop" in text
 
 
+def test_orca_batch_generation_accepts_multiple_structures(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    xyz1, config = write_example_files(tmp_path, kind="int", engine="orca")
+    xyz2 = tmp_path / "water_copy.xyz"
+    xyz2.write_text(xyz1.read_text(encoding="utf-8"), encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["qcinput", str(xyz1), str(xyz2), "--config", str(config)],
+    )
+
+    exit_code = main()
+    captured = capsys.readouterr()
+    output1 = tmp_path / "water.inp"
+    output2 = tmp_path / "water_copy.inp"
+
+    assert exit_code == 0
+    assert str(output1) in captured.out
+    assert str(output2) in captured.out
+    assert output1.exists()
+    assert output2.exists()
+    assert "! Opt Freq B3LYP def2-TZVP NoPop" in output1.read_text(encoding="utf-8")
+    assert "! Opt Freq B3LYP def2-TZVP NoPop" in output2.read_text(encoding="utf-8")
+
+
+def test_batch_generation_rejects_single_output_path(monkeypatch, tmp_path) -> None:
+    xyz1, config = write_example_files(tmp_path, kind="int", engine="orca")
+    xyz2 = tmp_path / "water_copy.xyz"
+    xyz2.write_text(xyz1.read_text(encoding="utf-8"), encoding="utf-8")
+    output = tmp_path / "combined.inp"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["qcinput", str(xyz1), str(xyz2), "--config", str(config), "-o", str(output)],
+    )
+
+    try:
+        main()
+    except SystemExit as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("Expected SystemExit when using -o with multiple inputs.")
+
+    assert "--output can only be used with a single input structure" in message
+
+
+def test_batch_generation_supports_output_dir(monkeypatch, tmp_path, capsys) -> None:
+    xyz1, config = write_example_files(tmp_path, kind="int", engine="orca")
+    xyz2 = tmp_path / "water_copy.xyz"
+    xyz2.write_text(xyz1.read_text(encoding="utf-8"), encoding="utf-8")
+    output_dir = tmp_path / "generated"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "qcinput",
+            str(xyz1),
+            str(xyz2),
+            "--config",
+            str(config),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    exit_code = main()
+    captured = capsys.readouterr()
+    output1 = output_dir / "water.inp"
+    output2 = output_dir / "water_copy.inp"
+
+    assert exit_code == 0
+    assert str(output1) in captured.out
+    assert str(output2) in captured.out
+    assert output1.exists()
+    assert output2.exists()
+
+
+def test_generation_supports_input_dir(monkeypatch, tmp_path, capsys) -> None:
+    input_dir = tmp_path / "structures"
+    input_dir.mkdir()
+    xyz, config = write_example_files(input_dir, kind="int", engine="orca")
+    (input_dir / "note.txt").write_text("ignore me\n", encoding="utf-8")
+    output_dir = tmp_path / "generated"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "qcinput",
+            "--input-dir",
+            str(input_dir),
+            "--config",
+            str(config),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    exit_code = main()
+    captured = capsys.readouterr()
+    output = output_dir / "water.inp"
+
+    assert exit_code == 0
+    assert str(output) in captured.out
+    assert output.exists()
+    assert "! Opt Freq B3LYP def2-TZVP NoPop" in output.read_text(encoding="utf-8")
+
+
+def test_generation_requires_at_least_one_input(monkeypatch, tmp_path) -> None:
+    _, config = write_example_files(tmp_path, kind="int", engine="orca")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["qcinput", "--config", str(config)],
+    )
+
+    try:
+        main()
+    except SystemExit as exc:
+        message = str(exc)
+    else:
+        raise AssertionError(
+            "Expected SystemExit when no input structures are provided."
+        )
+
+    assert "No input structures provided" in message
+
+
 def test_orca_ts_generation_from_toml(monkeypatch, tmp_path, capsys) -> None:
     xyz, config = write_example_files(tmp_path, kind="ts", engine="orca")
     config_text = config.read_text(encoding="utf-8")
